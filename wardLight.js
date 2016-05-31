@@ -2,8 +2,12 @@
 var b = require('bonescript');
 var io = require('socket.io-client');
 var socket = io.connect('http://192.168.1.6:3000');
+var os = require( 'os' );
+
+
+var IP = os.networkInterfaces( ).eth0[0].address;
 var payload = {
-    IP:'192.168.1.240',
+    IP:IP, //getting from network interfaces file IP='192.168.1.240'
     CallType: 'Normal'
 };
 
