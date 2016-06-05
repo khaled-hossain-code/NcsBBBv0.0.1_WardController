@@ -94,7 +94,6 @@ b.attachInterrupt(cancel_button, true, b.RISING, cancelCall); // cancels emergen
 /// ***************function Definition**********************\\\
 
 
-
 //this is the main operation handling function
 function executeState()
 {
