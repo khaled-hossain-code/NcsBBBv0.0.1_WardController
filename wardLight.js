@@ -8,7 +8,7 @@ var os = require( 'os' );
 var IP = os.networkInterfaces( ).eth0[0].address;
 var payload = {
     IP:IP, //getting from network interfaces file IP='192.168.1.240'
-    CallType: 'Normal'
+    CallType: 'Normal',
 };
 
 var wardLightInterval; //it is a setInterval function
