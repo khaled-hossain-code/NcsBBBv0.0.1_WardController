@@ -1,14 +1,15 @@
 ///******* Modules ******************\\\
 var b = require('octalbonescript'); //load the library
 var io = require('socket.io-client');
-//var socket = io.connect('http://192.168.1.6:8000'); // my pc
-var socket = io.connect('http://192.168.1.22:8000'); // mamshed vai's pc
+var socket = io.connect('http://192.168.1.6:8000'); // my pc
+//var socket = io.connect('http://192.168.1.22:8000'); // mamshed vai's pc
 var os = require( 'os' );
 
 var IP = os.networkInterfaces( ).eth0[0].address;
 var payload = {
     IP:IP, //getting from network interfaces file IP='192.168.1.240'
     CallType: 'Normal',
+    SocketID: ""
 };
 
 var wardLightInterval; //it is a setInterval function
@@ -103,7 +104,9 @@ setTimeout(presenceIndication('off'),2000);
 
 //after connection server sends an event named connection 
 socket.on('connected', function (data) {
-  console.log(data.status);
+  console.log(data.status, data.socketId);
+  payload.SocketID = data.socketId;
+  socket.emit("payload", payload);
 });
 
 
@@ -393,12 +396,11 @@ function presenceIndicationFlicker()
 //outputs:- none
 function soundIndication(milliseconds){ 
     
-    b.analogWrite(callIndicationSound,buzzerDutyCycle, buzzerFreq, function(err2) {
-      if (err2) {
-        console.error(err2.message); //output any error
-        return;
-      }else console.log('pwm running');
-  });
+    b.startAnalog(callIndicationSound, function(err){
+        if(err){
+            console.error(err.message);
+        }
+    });
   
   setTimeout(function(){
     b.stopAnalog(callIndicationSound, function(err){
@@ -407,7 +409,7 @@ function soundIndication(milliseconds){
     }else console.log('pwm stopped');
     });
     
-  }, duration);
+  }, milliseconds);
     
 };
 
