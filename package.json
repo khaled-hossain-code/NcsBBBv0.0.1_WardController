@@ -9,7 +9,6 @@
   "author": "khaled",
   "license": "ISC",
   "dependencies": {
-    "bonescript": "^0.2.5",
     "socket.io-client": "^1.4.6"
   }
 }
