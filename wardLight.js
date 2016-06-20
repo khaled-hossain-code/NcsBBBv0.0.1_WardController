@@ -1,7 +1,8 @@
 ///******* Modules ******************\\\
 var b = require('bonescript');
 var io = require('socket.io-client');
-var socket = io.connect('http://192.168.1.6:8000');
+//var socket = io.connect('http://192.168.1.6:8000'); // my pc
+var socket = io.connect('http://192.168.1.22:8000'); // mamshed vai's pc
 var os = require( 'os' );
 
 var IP = os.networkInterfaces( ).eth0[0].address;
