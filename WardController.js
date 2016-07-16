@@ -1,4 +1,5 @@
-var b = require('octalbonescript'); //load the library
+var octal = require('octalbonescript'); //load the library
+var bone = require('bonescript');
 var io = require('socket.io-client');
 var socket = io.connect('http://192.168.1.6:8000'); // my pc
 //var socket = io.connect('http://192.168.1.22:8000'); // mamshed vai's pc
@@ -13,7 +14,7 @@ var payload = {
 var wardLightInterval; //it is a setInterval function
 var presenceIndicationInterval; //this one is also a setInterval Function
 // *********** Variables *************\\
-var heartState = b.LOW;
+var heartState = octal.LOW;
 var wardColorState = 'off';
 var presenceColorState = 'off';
 var state = {
@@ -24,7 +25,7 @@ var buzzerDutyCycle = 0.5;
 var buzzerFreq = 2000;
 var heartbitRate = 1000;
 var presencePressed = 0;
-var duration = 100; // buzzer duration
+var duration = 1000; // buzzer duration
 var flickerTime = 1000;
 ///********* pin Assigning ***********\\\
 var heartbit = 'USR0';
@@ -41,18 +42,38 @@ var presenceIndicationRed = "P8_07";
 var presenceIndicationGreen =  "P8_09";
 var callIndicationSound = "P8_19"; //buzzer
 
-var pin = 'P8_19'; //the pin to operate on
+var callIndicationSound = 'P8_19'; //the pin to operate on
 
 // below code will assign analog output mode to pin and when the pin is ready, it will write 0.5 value.
-b.pinMode(pin, b.ANALOG_OUTPUT, function(err1) {
+octal.pinMode(callIndicationSound, octal.ANALOG_OUTPUT, function(err1) {
+  
   if (err1) {
     console.error(err1.message); //output any error
     return;
   }
-  b.analogWrite(pin, 0.5, 2000, function(err2) {
-      if (err2) {
-        console.error(err2.message); //output any error
-        return;
-      }
-  });
+  else {
+    console.info("analog output is set");
+  }
+  
+  soundIndication(duration);
+  
 });
+
+
+
+////////// SERVICES \\\\\\\\\\\\\\\\\\\
+
+//this is a function to generate beep
+//Description:- Whenever patient calls nurse its a sound indication to confirm that the call is happend. or any kind of error also generate sound
+//inputs:- delay in milliseconds (the duration of how long the sound will be)
+//outputs:- none
+function soundIndication(milliseconds){ 
+    
+    bone.analogWrite(callIndicationSound, buzzerDutyCycle, buzzerFreq);
+    if(milliseconds === 'undefined') milliseconds = 100;
+    
+    setTimeout(function() {
+        bone.analogWrite(callIndicationSound, 0);     // Turn off buzzer after milliseconds time 
+    }, milliseconds);
+}
+

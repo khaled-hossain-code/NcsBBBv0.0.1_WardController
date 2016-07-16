@@ -1,5 +1,6 @@
 ///******* Modules ******************\\\
 var b = require('bonescript');
+var octal = require('octalbonescript'); //load the library
 var io = require('socket.io-client');
 //var socket = io.connect('http://192.168.1.6:8000'); // my pc
 var socket = io.connect('http://192.168.1.22:8000'); // mamshed vai's pc
@@ -40,12 +41,15 @@ var wardLightGreen = "P9_22"; // 10ohm resistor is connected
 
 var presenceIndicationRed = "P8_7";
 var presenceIndicationGreen =  "P8_9";
-var callIndicationSound = "P8_19"; //buzzer
+var callIndicationSound = 'P8_19'; //buzzer
 
 //wardLight Inputs
 var pendant_button = "P9_12"; // pendant is the input of patient to call the nurse , this pin is pulled low externally by a 7.5k ohm res
 var presence_button = "P9_14"; //presence button is the input of nurse presence, this pin is pulled low externally by a 7.5k ohm res
 var cancel_button = "P9_16";
+
+
+/// ****** Initial/setup Code ****** \\\
 
 /// ******** pinMode setup ***********\\
 // setting outputs of onboard LED
@@ -69,19 +73,33 @@ b.pinMode(presence_button,b.INPUT); // this input only accepts high input
 b.pinMode(cancel_button,b.INPUT); // this input only accepts high input
 
 
+// below code will assign analog output mode to pin and when the pin is ready, it will write 0.5 value.
+octal.pinMode(callIndicationSound, octal.ANALOG_OUTPUT, function(err1) {
+  
+  if (err1) {
+    console.error(err1.message); //output any error
+    return;
+  }
+  else {
+    console.info("analog output is set");
+  }
+  
+  soundIndication(duration); //indication that device is live
+  
+});
 
-/// ****** Initial/setup Code ****** \\\
-
-
-
-///*****************function call once************************ \\\
-wardLight('off'); // At begining ward light is off
-presenceIndication('off'); // At begining patient call point indication is off
+//Indications that all the devices are working and started
+wardLight('green');  // At begining ward light will turned on for 1sec indicating that it is working and device is up
+setTimeout(wardLight('off'), 2000);
+presenceIndication('green'); // At begining presence indicator will turned on for 1sec indicating that it is working and device is up
+setTimeout(presenceIndication('off'),2000);
 
 //after connection server sends an event named connection 
 socket.on('connected', function (data) {
   console.log(data.status);
 });
+
+
 
 ///*****************function loop************************ \\\ 
 setInterval(hearRate, heartbitRate); //Checking the Heartbit
@@ -90,6 +108,8 @@ b.attachInterrupt(pendant_button, true, b.RISING, callNurse);//input of pendant 
 console.log("Ready to take input");
 b.attachInterrupt(presence_button, true, b.RISING, nursePresence);//input of nurse presence is interrupt driven, RISING, FALLING, CHANGE, whenever from low pin goes to high it calls nursePresence function.
 b.attachInterrupt(cancel_button, true, b.RISING, cancelCall); // cancels emergency or bluecode call
+
+ 
 
 /// ***************function Definition**********************\\\
 
