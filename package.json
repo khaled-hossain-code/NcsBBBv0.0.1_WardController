@@ -10,6 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "socket.io-client": "^1.4.6",
-    "octalbonescript" : "1.0.x"
+    "octalbonescript" : "1.2.x"
   }
 }
