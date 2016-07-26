@@ -14,6 +14,7 @@ var payload = {
 
 var wardLightInterval; //it is a setInterval function
 var presenceIndicationInterval; //this one is also a setInterval Function
+
 // *********** Variables *************\\
 var heartState = b.LOW;
 var wardColorState = 'off';
@@ -28,6 +29,7 @@ var heartbitRate = 1000;
 var presencePressed = 0;
 var duration = 100; // buzzer duration
 var flickerTime = 1000;
+
 ///********* pin Assigning ***********\\\
 var heartbit = 'USR0';
 var userLed1 = 'USR1';
