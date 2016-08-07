@@ -322,7 +322,7 @@ function nursePresence(){
             state.value = 3; // this means bluecode state
             executeState();
         }
-        else if(presencePressed > 3)
+        else if(presencePressed > 3 && state.value === 3)
         {
             //soundIndication(duration);
             console.log("Already Generated BlueCode");
