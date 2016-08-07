@@ -76,20 +76,20 @@ b.pinMode(callIndicationSound, b.ANALOG_OUTPUT, function(err1) {
   if (err1) {
     console.error(err1.message); //output any error
     return;
-  }else console.log('analog output set');
+  }else console.log('Buzzer Ready');
   
   b.analogWrite(callIndicationSound,buzzerDutyCycle, buzzerFreq, function(err2) {
       if (err2) {
         console.error(err2.message); //output any error
         return;
-      }else console.log('pwm running');
+      }
   });
   
   setTimeout(function(){
     b.stopAnalog(callIndicationSound, function(err){
     if(err){
       console.error(err.message);
-    }else console.log('pwm stopped');
+    }
     });
     
   }, duration);
@@ -98,13 +98,14 @@ b.pinMode(callIndicationSound, b.ANALOG_OUTPUT, function(err1) {
 
 //Indications that all the devices are working and started
 wardLight('green');  // At begining ward light will turned on for 1sec indicating that it is working and device is up
+console.log('WardLight Ready');
 setTimeout(wardLight('off'), 2000);
 presenceIndication('green'); // At begining presence indicator will turned on for 1sec indicating that it is working and device is up
 setTimeout(presenceIndication('off'),2000);
 
 //after connection server sends an event named connection 
 socket.on('connected', function (data) {
-  console.log(data.status, data.socketId);
+  console.log(data.status);
   payload.SocketID = data.socketId;
   socket.emit("payload", payload);
 });
@@ -406,7 +407,7 @@ function soundIndication(milliseconds){
     b.stopAnalog(callIndicationSound, function(err){
     if(err){
       console.error(err.message);
-    }else console.log('pwm stopped');
+    }
     });
     
   }, milliseconds);
