@@ -1,7 +1,7 @@
 ///******* Modules ******************\\\
 var b = require('octalbonescript'); //load the library
 var io = require('socket.io-client');
-var socket = io.connect('http://192.168.1.6:8000'); // my pc
+var socket = io.connect('http://192.168.1.6:8080'); // my pc
 //var socket = io.connect('http://192.168.1.22:8000'); // mamshed vai's pc
 var os = require( 'os' );
 
@@ -14,7 +14,7 @@ var payload = {
 
 var wardLightInterval; //it is a setInterval function
 var presenceIndicationInterval; //this one is also a setInterval Function
-
+var deviceStatus = 10; //Normal state or nothing need to be done
 
 // *********** Variables *************\\
 var heartState = b.LOW;
@@ -110,6 +110,14 @@ socket.on('connected', function (data) {
   socket.emit("payload", payload);
 });
 
+socket.on('deviceStatus', function(data){
+    //console.log("Device Stauts is " + data.deviceStatus);
+    deviceStatus = data.deviceStatus;
+    executeStatus();
+});
+
+
+
 
 ///*****************function loop************************ \\\ 
 setInterval(hearRate, heartbitRate); //Checking the Heartbit
@@ -161,7 +169,52 @@ b.attachInterrupt(cancel_button, b.RISING, function(err, resp) {
 
 
 /// ***************function Definition**********************\\\
+//this is the device status handling function which comes from server
+function executeStatus(){
 
+    switch(deviceStatus)
+        {
+        
+            case 0: // nurse pressed presence button
+                state.value = 0;
+                presencePressed = 0;
+                state.description = "Status: Nurse pressed the presence button";
+                break;
+            case 1: //Normal Call
+                state.value = 1;
+                wardLight('green');
+                presenceIndication('green');
+                state.description = "Status: Patient Called Nurse for help";
+                break;
+            case 2: //Emergency Call
+                state.value = 2;
+                presencePressed = 2;
+                wardLight('red'); //tasks:1.turn off ward light
+                presenceIndication('red'); //task2: turn off nurse presence indication
+                state.description = "Status: Nurse called for emergency help";
+                break;
+            case 3: //BlueCode call
+                state.value = 3;
+                presencePressed = 3;
+                wardLightInterval = setInterval(wardLightFlicker,flickerTime); //tasks:1.turn on ward light flickering
+                presenceIndicationInterval = setInterval(presenceIndicationFlicker,flickerTime); //task2: turn on nurse presence indication flickering
+                state.description = "Status: Nurse called for BlueCode";
+                break;
+            case 4: //Nurse Cancelled Emergency call
+                state.value = 4;
+                presencePressed = 0; 
+                state.description = "Status: Nurse cancelled Emergency call";
+                break;
+            case 5: //Nurse Cancelled BlueCode call
+                state.value = 5;
+                presencePressed = 0; 
+                state.description = "Status: Nurse cancelled BlueCode call";
+                break;
+            default:
+                console.log("Status: No state info in database");
+        }
+        console.log(state.description);
+}
 //this is the main operation handling function
 function executeState()
 {
