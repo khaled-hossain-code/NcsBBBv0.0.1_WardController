@@ -27,7 +27,8 @@ var state = {
 var buzzerDutyCycle = 0.5;
 var buzzerFreq = 2000;
 var heartbitRate = 1000;
-var presencePressed = 0;
+var presencePressed = 0; //to track how many times presence button is pressed
+var cancelPressed = 0; // to track how many times cancel button is pressed and if pressed more than 3 times app will be restarted
 var duration = 100; // buzzer duration
 var flickerTime = 1000;
 
@@ -56,39 +57,53 @@ var cancel_button = 'P9_16';
 
 /// ******** pinMode setup ***********\\
 // setting outputs of onboard LED
-b.pinModeSync(heartbit,b.OUTPUT); // declearing user led 0 as output
-b.pinModeSync(userLed1,b.OUTPUT);
-b.pinModeSync(userLed2,b.OUTPUT);
-b.pinModeSync(userLed3,b.OUTPUT);
+var resp1 = b.pinModeSync(heartbit,b.OUTPUT); // declearing user led 0 as output
+var resp2 = b.pinModeSync(userLed1,b.OUTPUT);
+var resp3 = b.pinModeSync(userLed2,b.OUTPUT);
+var resp4 = b.pinModeSync(userLed3,b.OUTPUT);
 
 // setting outputs of wardlight LED
-b.pinModeSync(wardLightRed,  b.OUTPUT);
-b.pinModeSync(wardLightBlue, b.OUTPUT);
-b.pinModeSync(wardLightGreen, b.OUTPUT);
+var resp5 = b.pinModeSync(wardLightRed,  b.OUTPUT);
+var resp6 = b.pinModeSync(wardLightBlue, b.OUTPUT);
+var resp7 = b.pinModeSync(wardLightGreen, b.OUTPUT);
 
 // setting outputs of Patient Call Point light LED
-b.pinModeSync(presenceIndicationGreen,  b.OUTPUT);
-b.pinModeSync(presenceIndicationRed, b.OUTPUT);
+var resp8 = b.pinModeSync(presenceIndicationGreen,  b.OUTPUT);
+var resp9 = b.pinModeSync(presenceIndicationRed, b.OUTPUT);
 
-
+//checking all digital pins are set to output
+//console.log("resp1: " + resp1, "resp2: " + resp2, "resp3: " + resp3, "resp4: " + resp4, "resp5: " + resp5, "resp6: " + resp6, "resp7: " + resp7, "resp8: " + resp8, "resp9: " + resp9);
+ if (resp1 || resp2 || resp3 || resp4 || resp5 || resp6 || resp7 || resp8 || resp9) // if setting any pinmode fails then restart the app
+ {
+     console.log("All Digital IO Ready");
+     
+ }else{
+     console.log("Unable to set pinMode", "Restarting the App");
+     process.exit(190);
+ }
+ 
 // below code will assign analog output mode to pin and when the pin is ready, it will write 0.5 value.
 b.pinMode(callIndicationSound, b.ANALOG_OUTPUT, function(err1) {
   if (err1) {
-    console.error(err1.message); //output any error
-    return;
+    //console.error(err1.message); //output any error
+    console.error("Unable to set buzzer pinMode");
+    process.exit(191);
   }else console.log('Buzzer Ready');
   
   b.analogWrite(callIndicationSound,buzzerDutyCycle, buzzerFreq, function(err2) {
       if (err2) {
-        console.error(err2.message); //output any error
-        return;
+        //console.error(err2.message); //output any error
+        console.error("Unable to Start Buzzer");
+        process.exit(192);
       }
   });
   
   setTimeout(function(){
     b.stopAnalog(callIndicationSound, function(err){
     if(err){
-      console.error(err.message);
+      //console.error(err.message);
+      console.error("Unable to Stop Buzzer");
+      process.exit(193);
     }
     });
     
@@ -126,14 +141,16 @@ console.log('HeartBit started');
 // below code will assign digital output mode to pin and when the pin is ready, it will put it in HIGH state.
 b.attachInterrupt(pendant_button, b.RISING, function(err, resp) {
   if(err){
-    console.error(err.message);
-    return;
+    //console.error(err.message);
+    console.error("Unable to Generate Pendant Interrupt");
+    process.exit(194);
   }
   callNurse();
 }, function(err){
   if(err){
-    console.error(err.message);
-    return;
+    //console.error(err.message);
+    console.error("Unable to Initialize Pendant");
+    process.exit(195);
   }else console.log('pendant Ready');
   
 });
@@ -141,28 +158,32 @@ b.attachInterrupt(pendant_button, b.RISING, function(err, resp) {
 
 b.attachInterrupt(presence_button, b.RISING, function(err, resp) {
   if(err){
-    console.error(err.message);
-    return;
+    //console.error(err.message);
+    console.error("Unable to Press Presence button");
+    process.exit(196);
   }
   nursePresence();
 }, function(err){
   if(err){
-    console.error(err.message);
-    return;
+    //console.error(err.message);
+    console.error("Unable to Initialize Presence Button");
+    process.exit(197);
   }else console.log('Presene button Ready');
   
 });
 
 b.attachInterrupt(cancel_button, b.RISING, function(err, resp) {
   if(err){
-    console.error(err.message);
-    return;
+    //console.error(err.message);
+    console.error("Unable to Press Cancel Button");
+    process.exit(198);
   }
   cancelCall();
 }, function(err){
   if(err){
-    console.error(err.message);
-    return;
+    //console.error(err.message);
+    console.error("Unable to Initialize Cancel Button");
+    process.exit(199);
   }else console.log('Cancel button Ready');
   
 });
@@ -210,10 +231,15 @@ function executeStatus(){
                 presencePressed = 0; 
                 state.description = "Status: Nurse cancelled BlueCode call";
                 break;
+            case 6: //Restart the App
+                console.log("App is Restarting");
+                process.exit(187);
             default:
-                console.log("Status: No state info in database");
+                state.description = "Status: No state info in database";
         }
+        console.log("Synched With Database");
         console.log(state.description);
+        
 }
 //this is the main operation handling function
 function executeState()
@@ -313,7 +339,7 @@ function executeState()
                 });
                 break;
             default:
-                console.log("Unknown Case ");
+                state.description = "No Call/Presence State";
         }
         
         console.log(state.description);
@@ -393,17 +419,30 @@ function cancelCall()
     // x is {"pin":{"name":"GPIO1_28","gpio":60,"mux":"gpmc_ben1","eeprom":36,"key":"P9_12","muxRegOffset":"0x078","options":["gpmc_ben1","mii2_col","NA","mmc2_dat3","NA","NA","mcasp0_aclkr","gpio1_28"]},"attached":true}
     
          presencePressed = 0; //clearing number of time nurse pressed the present button
+         cancelPressed++;
          
-         if(state.value === 2) // if nurse has called for emergency then cancel the emergency call alert
+         if(state.value === 0){ //nurse pressed presence button and after that nurse pressed cancel for initial state
+             state.value = 4; //initially at cancel state, so that presence button does not work but pendant button works
+             cancelPressed = 0;
+             state.description = "No Call/Presence State"; 
+             console.log(state.description);
+         }
+         else if(state.value === 2) // if nurse has called for emergency then cancel the emergency call alert
          {
             state.value = 4;  //state 4 means cancel emergency call
+            cancelPressed = 0;
             executeState();     
          }else if(state.value === 3) // if nurse has called for bluecode then cancel the blue code alert
          { 
              state.value = 5;
+             cancelPressed = 0;
              executeState();
+         }else if(cancelPressed >= 3){ //if cancel button is pressed more than 3 times restart the app
+             console.log("App Restarting!!!");
+             process.exit(187);
          }
          else{
+             console.log("Cancel Pressed : " + cancelPressed);
              console.log("nothing to cancel");
          }
 }
