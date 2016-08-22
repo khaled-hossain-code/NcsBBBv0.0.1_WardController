@@ -1,8 +1,10 @@
 ///******* Modules ******************\\\
 var b = require('octalbonescript'); //load the library
 var io = require('socket.io-client');
-var socket = io.connect('http://192.168.1.6:8080'); // my pc
-//var socket = io.connect('http://192.168.1.22:8000'); // mamshed vai's pc
+//var socket = io.connect('http://192.168.1.6:8080'); // my pc
+var socket = io.connect('http://192.168.1.29:8000'); // mamshed vai's pc
+//var socket = io.connect('http://192.168.1.12:8000'); // sagir vai's pc
+//var socket = io.connect('http://192.168.1.250:3000'); // Server Ncs1
 var os = require( 'os' );
 
 var IP = os.networkInterfaces( ).eth0[0].address;
@@ -131,6 +133,15 @@ socket.on('deviceStatus', function(data){
     executeStatus();
 });
 
+socket.on('deviceState', function(device){// it executes by commands from front-end
+    console.log(device.IP + " Device State is " + device.State);
+    
+    if(device.IP === IP){
+        deviceStatus = device.State;
+        executeStatus();    
+    }
+    
+});
 
 
 
@@ -199,12 +210,16 @@ function executeStatus(){
             case 0: // nurse pressed presence button
                 state.value = 0;
                 presencePressed = 0;
+                wardLight('off');
+                presenceIndication('off');
+                soundIndication(duration);
                 state.description = "Status: Nurse pressed the presence button";
                 break;
             case 1: //Normal Call
                 state.value = 1;
                 wardLight('green');
                 presenceIndication('green');
+                soundIndication(duration);
                 state.description = "Status: Patient Called Nurse for help";
                 break;
             case 2: //Emergency Call
@@ -212,6 +227,11 @@ function executeStatus(){
                 presencePressed = 2;
                 wardLight('red'); //tasks:1.turn off ward light
                 presenceIndication('red'); //task2: turn off nurse presence indication
+                soundIndication(duration);
+                
+                setTimeout(function(){
+                    soundIndication(duration);    
+                },2*duration);
                 state.description = "Status: Nurse called for emergency help";
                 break;
             case 3: //BlueCode call
@@ -219,16 +239,27 @@ function executeStatus(){
                 presencePressed = 3;
                 wardLightInterval = setInterval(wardLightFlicker,flickerTime); //tasks:1.turn on ward light flickering
                 presenceIndicationInterval = setInterval(presenceIndicationFlicker,flickerTime); //task2: turn on nurse presence indication flickering
+                soundIndication(duration);
+                
+                setTimeout(function(){
+                    soundIndication(duration);    
+                },2*duration);
                 state.description = "Status: Nurse called for BlueCode";
                 break;
             case 4: //Nurse Cancelled Emergency call
                 state.value = 4;
                 presencePressed = 0; 
+                wardLight('off'); //tasks:1.turn off ward light 
+                presenceIndication('off'); //task2: turn off nurse presence indication 
                 state.description = "Status: Nurse cancelled Emergency call";
                 break;
             case 5: //Nurse Cancelled BlueCode call
                 state.value = 5;
                 presencePressed = 0; 
+                clearInterval(wardLightInterval); //tasks:1.turn off ward light 
+                wardLight('off');
+                clearInterval(presenceIndicationInterval) //task2: turn off nurse presence indication 
+                presenceIndication('off');
                 state.description = "Status: Nurse cancelled BlueCode call";
                 break;
             case 6: //Restart the App
@@ -279,7 +310,13 @@ function executeState()
                 wardLight('red'); //tasks:1.turn off ward light
                 presenceIndication('red'); //task2: turn off nurse presence indication
                 state.description = "Nurse called for emergency help";
+                
                 soundIndication(duration);
+                
+                setTimeout(function(){
+                    soundIndication(duration);    
+                },2*duration);
+                
                 //notify server
                 payload.CallType = 'Emergency';
                 
@@ -287,9 +324,6 @@ function executeState()
                     console.log(data);
                 });
                 
-                setTimeout(function(){
-                    soundIndication(duration);    
-                },2*duration);
                 break;
                 
             case 3: //BLUECODE:whenever nurse presses presence button once while it was on emergency state this case is executed. state.value =3
