@@ -2,9 +2,9 @@
 var b = require('octalbonescript'); //load the library
 var io = require('socket.io-client');
 //var socket = io.connect('http://192.168.1.6:8080'); // my pc
-var socket = io.connect('http://192.168.1.29:8000'); // mamshed vai's pc
+//var socket = io.connect('http://192.168.1.29:8000'); // mamshed vai's pc
 //var socket = io.connect('http://192.168.1.12:8000'); // sagir vai's pc
-//var socket = io.connect('http://192.168.1.250:3000'); // Server Ncs1
+var socket = io.connect('http://192.168.1.250:8000'); // Server Ncs1
 var os = require( 'os' );
 
 var IP = os.networkInterfaces( ).eth0[0].address;
@@ -120,6 +120,7 @@ setTimeout(wardLight('off'), 2000);
 presenceIndication('green'); // At begining presence indicator will turned on for 1sec indicating that it is working and device is up
 setTimeout(presenceIndication('off'),2000);
 
+//*****Socket.IO*********\\\\\\\
 //after connection server sends an event named connection 
 socket.on('connected', function (data) {
   console.log(data.status);
@@ -127,7 +128,7 @@ socket.on('connected', function (data) {
   socket.emit("payload", payload);
 });
 
-socket.on('deviceStatus', function(data){
+socket.on('deviceStatus', function(data){ //this synch information with database
     //console.log("Device Stauts is " + data.deviceStatus);
     deviceStatus = data.deviceStatus;
     executeStatus();
@@ -136,13 +137,45 @@ socket.on('deviceStatus', function(data){
 socket.on('deviceState', function(device){// it executes by commands from front-end
     console.log(device.IP + " Device State is " + device.State);
     
+    //device.state value means
+    //0 = presence 1=normal call, 2= emergency call 3= bluecode 4=cancel emergency 5= cancel bluecode 6=app restart in executeStatus
     if(device.IP === IP){
-        deviceStatus = device.State;
-        executeStatus();    
+        if(device.State === 0 && state.value === 1 ) //if the state is in normal call then user can cancel givng device.state = 0;
+        {//from web asked for presence
+            state.value = device.State;   
+            executeState();
+        }else if(device.State === 1 && (state.value === 0 || state.value === 4 || state.value === 5 ) ) //from web asked for normal call, at cancel state, so that presence button does not work but pendant button works
+        {
+            state.value = device.State;
+            executeState();
+        }else if(device.State === 2 && state.value === 0  ) //from web asked to generate emergency call, it can happen in presence mode only
+        {
+            state.value = device.State;
+            executeState();
+        }else if(device.State === 3 && state.value === 2  )//from web asked to generate bluecode call, it can happen in emergency only
+        {
+            state.value = device.State;
+            executeState();
+        }else if(device.State === 4 && state.value === 2  )//from web asked to cancel emergency, it can happen in emergency only
+        {
+            state.value = device.State;
+            executeState();
+        }else if(device.State === 5 && state.value === 3  )//from web asked to cancel bluecode, it can happen in bluecode only
+        {
+            state.value = device.State;
+            executeState();
+        }else if(device.State === 6) //web asked to restart the app
+        {
+            deviceStatus = device.state;
+            executeStatus();        
+        }else{
+            console.log("Nothing to execute");
+        }
+        
+        
     }
     
 });
-
 
 
 ///*****************function loop************************ \\\ 
