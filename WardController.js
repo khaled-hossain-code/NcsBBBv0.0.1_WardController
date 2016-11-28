@@ -1,10 +1,14 @@
 ///******* Modules ******************\\\
 var b = require('octalbonescript'); //load the library
+var async = require('async');
 var io = require('socket.io-client');
-//var socket = io.connect('http://192.168.1.6:8080'); // my pc
+
+//var socket = io.connect('http://192.168.1.6:8000'); // my pc
 //var socket = io.connect('http://192.168.1.29:8000'); // mamshed vai's pc
 //var socket = io.connect('http://192.168.1.12:8000'); // sagir vai's pc
-var socket = io.connect('http://192.168.1.250:8000'); // Server Ncs1
+
+var socket = io.connect('http://192.168.1.210:8000'); // Server Ncs1
+
 var os = require( 'os' );
 
 var IP = os.networkInterfaces( ).eth0[0].address;
@@ -85,33 +89,39 @@ var resp9 = b.pinModeSync(presenceIndicationRed, b.OUTPUT);
  }
  
 // below code will assign analog output mode to pin and when the pin is ready, it will write 0.5 value.
-b.pinMode(callIndicationSound, b.ANALOG_OUTPUT, function(err1) {
-  if (err1) {
-    //console.error(err1.message); //output any error
-    console.error("Unable to set buzzer pinMode");
-    process.exit(191);
-  }else console.log('Buzzer Ready');
-  
-  b.analogWrite(callIndicationSound,buzzerDutyCycle, buzzerFreq, function(err2) {
-      if (err2) {
-        //console.error(err2.message); //output any error
-        console.error("Unable to Start Buzzer");
-        process.exit(192);
-      }
-  });
-  
-  setTimeout(function(){
-    b.stopAnalog(callIndicationSound, function(err){
-    if(err){
-      //console.error(err.message);
-      console.error("Unable to Stop Buzzer");
-      process.exit(193);
-    }
+try{
+    b.pinMode(callIndicationSound, b.ANALOG_OUTPUT, function(err1) {
+      if (err1) {
+        //console.error(err1.message); //output any error
+        console.error("Unable to set buzzer pinMode");
+        process.exit(191);
+      }else console.log('Buzzer Ready');
+      
+      b.analogWrite(callIndicationSound,buzzerDutyCycle, buzzerFreq, function(err2) {
+          if (err2) {
+            //console.error(err2.message); //output any error
+            console.error("Unable to Start Buzzer");
+            process.exit(192);
+          }
+      });
+      
+      setTimeout(function(){
+        b.stopAnalog(callIndicationSound, function(err){
+        if(err){
+          //console.error(err.message);
+          console.error("Unable to Stop Buzzer");
+          process.exit(193);
+        }
+        });
+        
+      }, 100);
+      
     });
     
-  }, duration);
-  
-});
+}catch(err){
+    console.error("Unable to Start Buzzer");
+    //process.exit(192);
+}
 
 //Indications that all the devices are working and started
 wardLight('green');  // At begining ward light will turned on for 1sec indicating that it is working and device is up
@@ -554,24 +564,41 @@ function presenceIndicationFlicker()
 //Description:- Whenever patient calls nurse its a sound indication to confirm that the call is happend. or any kind of error also generate sound
 //inputs:- delay in milliseconds (the duration of how long the sound will be)
 //outputs:- none
-function soundIndication(milliseconds){ 
     
-    b.startAnalog(callIndicationSound, function(err){
-        if(err){
-            console.error(err.message);
-        }
-    });
-  
-  setTimeout(function(){
-    b.stopAnalog(callIndicationSound, function(err){
+function soundIndication(duration){
+async.series({
+  buzzerOn: function(callback){
+            setTimeout(function(){
+              
+              console.log("buzzer On");
+              b.startAnalog(callIndicationSound, function(err){
+                 if(err){
+                    console.error(err.message);
+                  }
+              });
+              
+              callback(null,1);
+            },10);
+          },
+  buzzerOff: function(callback){
+            setTimeout(function(){
+              
+              console.log("buzzer off");
+              b.stopAnalog(callIndicationSound, function(err){
+                if(err){
+                  console.error(err.message);
+                }
+              });
+              
+              callback(null, 0);
+            },100); //set timeout can not be on variable
+          }
+}, function(err, result){
     if(err){
-      console.error(err.message);
+        console.log("PWM file can not be openned");
     }
-    });
-    
-  }, milliseconds);
-    
-};
+});
+}
 
 //This is a function to turn on ward light. 
 // Description:- this function takes color name as input and turn on the respective pins to turn on that color
